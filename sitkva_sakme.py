@@ -38,7 +38,9 @@ class SitkvaSakme:
     
     
         return article_links
-        
+
+
+class SitkvaSakmeArticle():
     
     def get_price(self,soup):
         """ 
@@ -152,11 +154,32 @@ class SitkvaSakme:
     
         return author
         
+    
+
+    def get_article_all_data(self,soup):
+        """
+        args:
+            soup: BeautifulSoup object
+
+        returns data: dictionary | all info on the page
+        """
+        price = self.get_price(soup)
+        params = self.get_params(soup)
+        add_info = self.get_additional_info(soup)
+        article_data = self.get_article_data(soup)
+        author = self.get_author(soup)
+
+
+        res = {**price,**params,**add_info,**article_data,**author } 
         
-#if __name__ == '__main__':
-#    link = 'https://ss.ge/ka/udzravi-qoneba/qiravdeba-dghiurad-2-otaxiani-bina-saburtaloze-3780440'
-#    res = requests.get(link)
-#    soup = BeautifulSoup(res.text,'html.parser')
-#
-#    info = get_params(soup)
-#    pprint(info)
+        return res
+
+
+if __name__ == '__main__':
+    link = 'https://ss.ge/ka/udzravi-qoneba/qiravdeba-dghiurad-2-otaxiani-bina-saburtaloze-3780440'
+    res = requests.get(link)
+    soup = BeautifulSoup(res.text,'html.parser')
+    
+    ss_article = SitkvaSakmeArticle()
+    res = ss_article.get_article_all_data(soup)
+    pprint(res)
