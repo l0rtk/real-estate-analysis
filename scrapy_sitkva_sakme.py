@@ -64,60 +64,61 @@ class SitkvaSakmeArticle():
 
     
     
-    def get_additional_info(self,soup):
+    def get_additional_info(self,response):
         """
         args:
-            soup: BeautifulSoup object
+            response: scrapy response
     
             returns additional_info: dictionary
         """
     
         additional_info = {}
-    
-        info_div = soup.find('div',class_='AditionalInfoBlocksBody')
-        infos = info_div.find_all('div',class_='parameteres_item_each')
-    
+
+        info_div = response.xpath('//div[@class="AditionalInfoBlocksBody"]')
+        infos = info_div.xpath('//div[has-class("parameteres_item_each")]')
+
         for info in infos:
-            is_checked = info.find('span',class_='CheckedParam')
-            
-            if is_checked:
-                additional_info[info.text.strip()] = True
-            else:
-                additional_info[info.text.strip()] = False
+            name = info.css('::text').get().strip()
+            isChecked = info.css('span').xpath("@class").extract()[0].strip()
+            if isChecked == "CheckedParam":
+                additional_info[name] = 1
+            if isChecked == "UnCheckedParam":
+                additional_info[name] = 0
+
+        return additional_info    
     
-        return additional_info
-    
-    
-    def get_article_data(self,soup):
+
+    def get_article_data(self,response):
         """
         args:
-            soup: BeautifulSoup object
+            response: scrapy response
     
         returns article_data: dictionary
         """
         article_data = {}
     
-        id_div = soup.find('div',class_='article_item_id')
-        id_text = id_div.find('span').text.strip()
-    
-        date = soup.find('div',class_='add_date_block').text.strip()
-        
+        id_div = response.xpath('//div[@class="article_item_id"]')
+        id_text = id_div.css('span::text').get().strip()
         article_data['id'] = id_text
+
+        date = response.xpath('//div[has-class("add_date_block")]/text()').get().strip()
+
         article_data['date'] = date
-    
+
         return article_data
     
     
-    def get_author(self,soup):
+    def get_author(self,response):
         """ 
         args:
-            soup: BeautifulSoup object
+            response: scrapy response
         returns author: dictionary
         """
         author = {}
-        
-        name = soup.find('div',class_='author_type').text.strip().split('\r')[0]
-        number = soup.find('span',class_='EAchPHonenumber').text
+
+        name = response.xpath('//div[has-class("author_type")]/text()').get().strip().split('\r')[0]
+        number = response.xpath('//span[has-class("EAchPHonenumber")]/text()').get()
+
     
         author['name'] = name
         author['number'] = number
@@ -126,23 +127,28 @@ class SitkvaSakmeArticle():
         
     
 
-    def get_article_all_data(self,soup):
+    def get_article_all_data(self,response):
         """
         args:
-            soup: BeautifulSoup object
+            response: scrapy response
 
         returns data: dictionary | all info on the page
         """
-        price = self.get_price(soup)
-        params = self.get_params(soup)
-        add_info = self.get_additional_info(soup)
-        article_data = self.get_article_data(soup)
-        author = self.get_author(soup)
+        price = self.get_price(response)
+        params = self.get_params(response)
+        add_info = self.get_additional_info(response)
+        article_data = self.get_article_data(response)
+        author = self.get_author(response)
 
 
         res = {**price,**params,**add_info,**article_data,**author } 
         
         return res
+
+
+
+
+
 
 
 ss_article = SitkvaSakmeArticle()
@@ -175,8 +181,8 @@ class MySpider(scrapy.Spider):
 
     # parsing each article
     def parse_article(self,response):
-        price = ss_article.get_params(response)
-        print('\n',price,'\n')
+        all_data = ss_article.get_article_all_data(response)
+        print('\n',all_data,'\n')
 
 process = CrawlerProcess()
 
