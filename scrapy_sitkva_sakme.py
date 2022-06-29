@@ -4,6 +4,7 @@ from scrapy.crawler import CrawlerProcess
 from scrapy import signals
 from scrapy.signalmanager import dispatcher
 import pandas as pd
+from datetime import datetime 
 
 import logging
 
@@ -62,8 +63,6 @@ class SitkvaSakmeArticle():
         for i in range(len(bottom_names)):
             params[bottom_names[i].strip()] = bottom_values[i].strip()
 
-        
-
         return params
 
     
@@ -109,7 +108,7 @@ class SitkvaSakmeArticle():
 
         article_data['date'] = date
         article_data['link'] = response.url
-        
+
         return article_data
     
     
@@ -226,14 +225,12 @@ def result_to_dataframe(results):
 
 
 
-from pprint import pprint
 if __name__ == "__main__":
 
 
-
-    links = [f"https://ss.ge/ka/udzravi-qoneba/l/bina/iyideba?Page={i}&RealEstateTypeId=5&RealEstateDealTypeId=4&BaseUrl=/ka/udzravi-qoneba/l&CurrentUserId=&Query=&MunicipalityId=95&CityIdList=95&IsMap=false&subdistr=32,33,34,35,36,37,53,38,39,40,41,42,43&stId=&PrcSource=1&RealEstateStatus=&CommercialRealEstateType=&QuantityFrom=&QuantityTo=&PriceType=false&CurrencyId=1&PriceFrom=&PriceTo=&Context.Request.Query[Query]=&FloorType=&Balcony_Loggia=&Toilet=&Project=&Other=&State=&HouseWillHaveToLive=&BedroomsFrom=&BedroomsTo=&KitchenAreaFrom=&KitchenAreaTo=&FloorsFrom=&FloorsTo=&AdditionalInformation=&ConstructionAgencyId=&AgencyId=&VipStatus=&PageSize=20&Sort.SortExpression=%221%22&WIth360Image=false&IsConstruction=false&WithImageOnly=false&IndividualEntityOnly=false&IsPetFriendly=false&IsForUkraine=false" for i in range(0,450)] 
+    pages = 5
+    links = [f"https://ss.ge/ka/udzravi-qoneba/l/bina/iyideba?Page={i}&RealEstateTypeId=5&RealEstateDealTypeId=4&BaseUrl=/ka/udzravi-qoneba/l&CurrentUserId=&Query=&MunicipalityId=95&CityIdList=95&IsMap=false&subdistr=32,33,34,35,36,37,53,38,39,40,41,42,43&stId=&PrcSource=1&RealEstateStatus=&CommercialRealEstateType=&QuantityFrom=&QuantityTo=&PriceType=false&CurrencyId=1&PriceFrom=&PriceTo=&Context.Request.Query[Query]=&FloorType=&Balcony_Loggia=&Toilet=&Project=&Other=&State=&HouseWillHaveToLive=&BedroomsFrom=&BedroomsTo=&KitchenAreaFrom=&KitchenAreaTo=&FloorsFrom=&FloorsTo=&AdditionalInformation=&ConstructionAgencyId=&AgencyId=&VipStatus=&PageSize=20&Sort.SortExpression=%221%22&WIth360Image=false&IsConstruction=false&WithImageOnly=false&IndividualEntityOnly=false&IsPetFriendly=false&IsForUkraine=false" for i in range(0,pages)] 
     results = spider_results(links)
-    print(results)
-    df = result_to_dataframe(results)
 
-    df.to_csv('გლდანი-ნაძალადევი-ბინები.csv')
+    now = datetime.now().strftime('%m-%d %H:%M')
+    pd.DataFrame(results).to_csv(f'{now}-data.csv')
