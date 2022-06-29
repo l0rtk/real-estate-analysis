@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 import scrapy
 from scrapy.crawler import CrawlerProcess
+from scrapy import signals
+from scrapy.signalmanager import dispatcher
+import pandas as pd
+
 import logging
 
 logging.getLogger('scrapy').setLevel(logging.WARNING)
@@ -147,18 +151,14 @@ class SitkvaSakmeArticle():
 
 
 
-
-
-
-
-ss_article = SitkvaSakmeArticle()
-
-class MySpider(scrapy.Spider):
+class SitkvaSakmeSpider(scrapy.Spider):
     name = "quotes"
     domain = "https://ss.ge"
+    ss_article = SitkvaSakmeArticle()
+
 
     def start_requests(self):
-        links = [f"https://ss.ge/ka/udzravi-qoneba/l/bina/iyideba?Page={i}&RealEstateTypeId=5&RealEstateDealTypeId=4&MunicipalityId=95&CityIdList=95&subdistr=47" for i in range(1,5)]
+        links = [f"https://ss.ge/ka/udzravi-qoneba/l/bina/iyideba?Page={i}&RealEstateTypeId=5&RealEstateDealTypeId=4&MunicipalityId=95&CityIdList=95&subdistr=47" for i in range(1,2)]
         
         for link in links:
             yield scrapy.Request(url=link, callback=self.parse)
@@ -177,14 +177,50 @@ class MySpider(scrapy.Spider):
             yield scrapy.Request(url=link, callback=self.parse_article)
 
 
-
-
     # parsing each article
     def parse_article(self,response):
-        all_data = ss_article.get_article_all_data(response)
-        print('\n',all_data,'\n')
+        all_data = self.ss_article.get_article_all_data(response)
+        return all_data
 
-process = CrawlerProcess()
 
-process.crawl(MySpider)
-process.start() 
+def spider_results():
+    results = []
+
+    def crawler_results(signal, sender, item, response, spider):
+        results.append(item)
+
+    dispatcher.connect(crawler_results, signal=signals.item_scraped)
+
+    process = CrawlerProcess()
+    process.crawl(SitkvaSakmeSpider)
+    process.start()  # the script will block here until the crawling is finished
+    return results
+
+
+def result_to_dataframe(results):
+    res_dict = {}
+
+    # fill with all fields
+    for res in results:
+        for k,v in res.items():
+            res_dict[k] = []
+
+    for res in results:
+        for key in res_dict.keys():
+            try:
+                res_dict[key].append(res[key])
+            except KeyError:
+                res_dict[key].append('NaN')
+
+    df = pd.DataFrame(res_dict)
+
+    return df
+
+
+
+from pprint import pprint
+if __name__ == "__main__":
+    results = spider_results()
+    df = result_to_dataframe(results)
+
+    df.to_csv('ვაკე-ბინები.csv')
