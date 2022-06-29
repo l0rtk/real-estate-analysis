@@ -108,7 +108,8 @@ class SitkvaSakmeArticle():
         date = response.xpath('//div[has-class("add_date_block")]/text()').get().strip()
 
         article_data['date'] = date
-
+        article_data['link'] = response.url
+        
         return article_data
     
     
@@ -155,12 +156,15 @@ class SitkvaSakmeSpider(scrapy.Spider):
     name = "quotes"
     domain = "https://ss.ge"
     ss_article = SitkvaSakmeArticle()
+    pages = 0
 
+    def __init__(self,links):
+        self.links = links
 
     def start_requests(self):
-        links = [f"https://ss.ge/ka/udzravi-qoneba/l/bina/iyideba?Page={i}&RealEstateTypeId=5&RealEstateDealTypeId=4&MunicipalityId=95&CityIdList=95&subdistr=47" for i in range(1,2)]
-        
-        for link in links:
+        for link in self.links:
+            self.pages += 1
+            print('page: ',str(self.pages))
             yield scrapy.Request(url=link, callback=self.parse)
 
     def parse(self, response):
@@ -183,7 +187,7 @@ class SitkvaSakmeSpider(scrapy.Spider):
         return all_data
 
 
-def spider_results():
+def spider_results(links):
     results = []
 
     def crawler_results(signal, sender, item, response, spider):
@@ -192,9 +196,13 @@ def spider_results():
     dispatcher.connect(crawler_results, signal=signals.item_scraped)
 
     process = CrawlerProcess()
-    process.crawl(SitkvaSakmeSpider)
+    process.crawl(SitkvaSakmeSpider,links = links)
     process.start()  # the script will block here until the crawling is finished
     return results
+
+
+
+
 
 
 def result_to_dataframe(results):
@@ -220,7 +228,12 @@ def result_to_dataframe(results):
 
 from pprint import pprint
 if __name__ == "__main__":
-    results = spider_results()
+
+
+
+    links = [f"https://ss.ge/ka/udzravi-qoneba/l/bina/iyideba?Page={i}&RealEstateTypeId=5&RealEstateDealTypeId=4&BaseUrl=/ka/udzravi-qoneba/l&CurrentUserId=&Query=&MunicipalityId=95&CityIdList=95&IsMap=false&subdistr=32,33,34,35,36,37,53,38,39,40,41,42,43&stId=&PrcSource=1&RealEstateStatus=&CommercialRealEstateType=&QuantityFrom=&QuantityTo=&PriceType=false&CurrencyId=1&PriceFrom=&PriceTo=&Context.Request.Query[Query]=&FloorType=&Balcony_Loggia=&Toilet=&Project=&Other=&State=&HouseWillHaveToLive=&BedroomsFrom=&BedroomsTo=&KitchenAreaFrom=&KitchenAreaTo=&FloorsFrom=&FloorsTo=&AdditionalInformation=&ConstructionAgencyId=&AgencyId=&VipStatus=&PageSize=20&Sort.SortExpression=%221%22&WIth360Image=false&IsConstruction=false&WithImageOnly=false&IndividualEntityOnly=false&IsPetFriendly=false&IsForUkraine=false" for i in range(0,450)] 
+    results = spider_results(links)
+    print(results)
     df = result_to_dataframe(results)
 
-    df.to_csv('ვაკე-ბინები.csv')
+    df.to_csv('გლდანი-ნაძალადევი-ბინები.csv')
