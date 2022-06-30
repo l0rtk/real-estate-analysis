@@ -130,6 +130,21 @@ class SitkvaSakmeArticle():
         return author
         
     
+    def get_location(self,response):
+        """ 
+        args:
+            response: scrapy response
+        returns street: string
+        """
+        loc = {}
+
+        location_div = response.xpath('//div[has-class("StreeTaddressList")]')
+        location = location_div.css('a::text').get().strip()
+        loc['location'] = location
+
+        return loc
+        
+    
 
     def get_article_all_data(self,response):
         """
@@ -143,9 +158,9 @@ class SitkvaSakmeArticle():
         add_info = self.get_additional_info(response)
         article_data = self.get_article_data(response)
         author = self.get_author(response)
+        location = self.get_location(response)
 
-
-        res = {**price,**params,**add_info,**article_data,**author } 
+        res = {**price,**params,**add_info,**article_data,**author ,**location} 
         
         return res
 
@@ -227,10 +242,9 @@ def result_to_dataframe(results):
 
 if __name__ == "__main__":
 
-
-    pages = 5
+    pages = 3
     links = [f"https://ss.ge/ka/udzravi-qoneba/l/bina/iyideba?Page={i}&RealEstateTypeId=5&RealEstateDealTypeId=4&BaseUrl=/ka/udzravi-qoneba/l&CurrentUserId=&Query=&MunicipalityId=95&CityIdList=95&IsMap=false&subdistr=32,33,34,35,36,37,53,38,39,40,41,42,43&stId=&PrcSource=1&RealEstateStatus=&CommercialRealEstateType=&QuantityFrom=&QuantityTo=&PriceType=false&CurrencyId=1&PriceFrom=&PriceTo=&Context.Request.Query[Query]=&FloorType=&Balcony_Loggia=&Toilet=&Project=&Other=&State=&HouseWillHaveToLive=&BedroomsFrom=&BedroomsTo=&KitchenAreaFrom=&KitchenAreaTo=&FloorsFrom=&FloorsTo=&AdditionalInformation=&ConstructionAgencyId=&AgencyId=&VipStatus=&PageSize=20&Sort.SortExpression=%221%22&WIth360Image=false&IsConstruction=false&WithImageOnly=false&IndividualEntityOnly=false&IsPetFriendly=false&IsForUkraine=false" for i in range(0,pages)] 
     results = spider_results(links)
 
     now = datetime.now().strftime('%m-%d %H:%M')
-    pd.DataFrame(results).to_csv(f'{now}-data.csv')
+    pd.DataFrame(results).to_csv(f'./data/{now}-data.csv')
